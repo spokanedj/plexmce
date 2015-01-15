@@ -26,102 +26,100 @@ import PhotoFiles  # Search for Photo files.
 import AudioFiles  # Search for Audio files.
                    # AudioFiles.Scan(path, files, mediaList, subdirs, root)
 
+import ID3, ID3v2
+from mutagen.flac import FLAC
+from mutagen.oggvorbis import OggVorbis
+from mutagen.easyid3 import EasyID3
+from mutagen.easymp4 import EasyMP4
+from mutagen.asf import ASF
+
 import logging
-logging.basicConfig(filename='C:\Users\dale\AppData\Local\Plex Media Server\Scanners\Movies\Testlog.log',level=logging.DEBUG)
+logging.basicConfig(filename='C:\Users\dale\AppData\Local\Plex Media Server\Scanners\Series\Plex Scanner For Media Center TV Shows.log',level=logging.DEBUG)
 
-import win32com.client
-sh=win32com.client.gencache.EnsureDispatch('Shell.Application',0)
-
-# Build the Col # <-> Column Name
-targetcols = ['Title', 'Genre', 'Rating', 'Length', 'Subtitle', 'Parental rating', 'Episode name', 'Broadcast date', 'Program description', 'Station call sign']
-colnames = []
-colnumbs = []
-
-for colnum in range(0,1024):
-    colname=ns.GetDetailsOf(None, colnum)
-    if colname:
-        for t in targetcols:
-            if t == colname:
-                colnames.append(colname)
-                colnumbs.append(colnum)
+##try:
+##    import win32com.client
+##except Exception as e:
+##    logging.exception(e)    
 
 # Scans through files, and add to the media list.
 def Scan(path, files, mediaList, subdirs, language=None, root=None, **kwargs):
-   
-  logging.debug((logTime(), "Start scanning of files in folder: ", path))
-  
-  VideoFiles.Scan(path, files, mediaList, subdirs, root)
 
-  # Add all the files
-  for fullfilepath in files:
-    file = os.path.basename(fullfilepath)
-    (title, ext) = os.path.splitext(file)
-
-   print(file)
-    # video (Movie)
-    # video.guid = "" move part identification
-    # (name, year) = VideoFiles.CleanName(file)
-    # video = Media.Movie(name, year)
-    # tv_show = Media.Episode(name, season, ep, '', year)
-    # video.source = VideoFiles.RetrieveSource(file)
-    # video.parts.append(fullfilepath) # Join movie parts for continuous playback
-        
-        
-    # video (Media Center)
-
-##  C:\Users\Public\Recorded TV\A to Z_KHQDT_2014_10_09_21_30_03.wtv
-##	 16 Genre : Comedy;Series
-##	 19 Rating : Unrated
-##	 21 Title : A to Z
-##	 27 Length : 00:32:53
-##	 204 Subtitle : B Is for Big Glory
-##	 240 Parental rating : TV-PG
-##	 267 Episode name : B Is for Big Glory
-##	 271 Broadcast date : ‎10/‎9/‎2014 ‏‎12:00 AM
-##	 272 Program description : Neithe...
-
-    mce_name = ns.GetDetailsOf(file, 21)
-    mce_episode = ns.GetDetailsOf(file, 267)
-    mce_description = ns.GetDetailsOf(file, 272)
-    mce_date = ns.GetDetailsOf(file, 271)
-
-    mce_date2 = datetime.strptime(mce_date, "%m/%d/%Y %H:%M %p")
-
-    print (mce_title)
-    print (mce_episode)
-    print (mce_description)
-    print (mce_date)
-    print (mce_date2)
-
-##    (name, year) = VideoFiles.CleanName(path)    
-##    logging.debug((logTime(), " CleanName: ", name, year))
+  if (path != "TempRec"):
+##    logging.debug((logTime(), "win32com loaded: "))
 ##
-##    match = re.search(episode_regex[-1], file, re.IGNORECASE)
-##    if match:    
-##      ep = int(match.group('ep')) 
-##      logging.debug((logTime(), " Found ep in file: ", ep))
-##    
-##    match = re.search(year_regex[-1], file, re.IGNORECASE)
-##    if match:    
-##      year = int(match.group('year'))
-##      logging.debug((logTime(), " Found year in file: ", year))
+##    # Build the Col # <-> Column Name
+##    targetcols = ['Title', 'Genre', 'Rating', 'Length', 'Subtitle', 'Parental rating', 'Episode name', 'Broadcast date', 'Program description', 'Station call sign']
+##    colnames = []
+##    colnumbs = []
+##
+##    logging.debug((logTime(), "columns built: "))
+##
+##    sh=win32com.client.gencache.EnsureDispatch('Shell.Application',0)
+##    mypath = "c:\\users\\public\\recorded tv"
+##    ns = sh.NameSpace(mypath)
+##
+##    for colnum in range(0,1024):
+##        colname=ns.GetDetailsOf(None, colnum)
+##        if colname:
+##            for t in targetcols:
+##                if t == colname:
+##                    colnames.append(colname)
+##                    colnumbs.append(colnum)
+##
+##    logging.debug((logTime(), "columns loaded: "))
 
-    video = Media.Episode(mce_title, '2014', mce_episode, path, Null)
-    #tv_show = Media.Episode(name, season, ep, '', year)
-    video.display_offset = mce_episode
-    video.parts.append(fullfilepath)
-    mediaList.append(video)
+    logging.debug((logTime(), "--------------------------------------- TV Start scanning of files in folder: ", path))
+    
+    # Filter out bad stuff and duplicates.
+    VideoFiles.Scan(path, files, mediaList, subdirs, root)
 
-    tv_show = Media.Episode(mce_name, mce_date[0:9], 'ep1', mce_episode, mce_date[0:9])      
-    tv_show.released_at = '%d-%02d-%02d' % (int(year), int(month), int(day))
-    tv_show.parts.append(filepath)
-    mediaList.append(tv_show)
+    # Add all the videos to the list.
+    for fullfilepath in files:
+      if fullfilepath.endswith(".wtv"):
+    
+        file = os.path.basename(fullfilepath)
+                   
+        parts = file.split('_');
+        title = parts[0];
+        ep_title = parts[0] + ' ' + parts[3] + '/' + parts[4];
+        channelsign = parts[1];
+        year = int(parts[2]);
+        month = int(parts[3]);
+        day = int(parts[4]);
 
+        ep = (year-2000)*(12*31)+(31*month)+(day);
+        season = 1;
+        
+        logging.debug((logTime(), " Path: ", path))
+        logging.debug((logTime(), " FullPath: ", fullfilepath))
+        
+        logging.debug((logTime(), " File: ", file))
+        logging.debug((logTime(), " Tilte: ", title))
+        logging.debug((logTime(), " Year: ", year))
+        logging.debug((logTime(), " Season: ", season))
+        logging.debug((logTime(), " Episode: ", ep))
+
+        # video (Movie)
+##        video = Media.Movie(title, year)
+##        video.source = VideoFiles.RetrieveSource(fullfilepath) 
+##        video.parts.append(fullfilepath) 
+##        mediaList.append(video)
+
+        tv_show = Media.Episode(title, 0, ep, ep_title, year)
+        #tv_show.display_offset = (ep-episode)*100/(endEpisode-episode+1)
+        #tv_show.source = VideoFiles.RetrieveSource(fullfilepath) 
+        tv_show.parts.append(fullfilepath)
+        tv_show.released_at = '%d-%02d-%02d' % (year, month, day)
+        mediaList.append(tv_show)
+
+
+        logging.debug((logTime(), "---------------------------------------"))
+        logging.debug((logTime(), ""))
         
 def Update(path, files, mediaList, subdirs, language=None, root=None, **kwargs):
   logging.debug((logTime(), "Start update of files in folder: ", path))
     
-
+  
 def logTime ():
  return time.strftime("%H:%M:%S")
  

@@ -1,3 +1,7 @@
+import sys
+import codecs
+import os
+
 #this is my file
 
 mypath = "c:\\users\\public\\recorded tv"
@@ -32,12 +36,14 @@ for colnum in range(0,1024):
 for item in ns.Items():
     if isfile(item.Path)& item.Path.endswith(".wtv"):
         print (item.Path)
-        for colnum in range(len(targetcols)):
-            colval=ns.GetDetailsOf(item, colnumbs[colnum])
-            if colval:
-                print('\t', colnumbs[colnum], colnames[colnum], ":", colval)
+        file = os.path.basename(item.Path)
+        parts = file.split('_');
+        print (parts[0])
 
+##        for colnum in range(len(targetcols)):
+##            colval=ns.GetDetailsOf(item, colnumbs[colnum])
+##            if colval:
+##                print('\t', colnumbs[colnum], colnames[colnum], ":", colval)
 
-struct_time = datetime.strptime("10/9/2014 16:30 AM", "%m/%d/%Y %H:%M %p")
-
-print ("returned tuple:", struct_time)
+##struct_time = datetime.strptime("10/9/2014 16:30 AM", "%m/%d/%Y %H:%M %p")
+##print ("returned tuple:", struct_time)
